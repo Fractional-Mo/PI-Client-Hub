@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Users, Settings, Mic2 } from 'lucide-react'
+import { LayoutDashboard, Settings, Mic2, Search } from 'lucide-react'
 import { Client } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -27,6 +27,7 @@ export default function Sidebar({ clients }: Props) {
 
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-0.5">
         <NavItem href="/" icon={<LayoutDashboard size={16} />} label="Dashboard" active={path === '/'} />
+        <NavItem href="/search" icon={<Search size={16} />} label="Search" active={path === '/search'} />
         <NavItem href="/otter" icon={<Mic2 size={16} />} label="Otter.ai Sync" active={path === '/otter'} />
 
         <p className="px-3 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Clients</p>
@@ -40,7 +41,7 @@ export default function Sidebar({ clients }: Props) {
       </nav>
 
       <div className="px-5 py-3 border-t border-slate-700/60 text-xs text-slate-500">
-        All data stored locally
+        Synced via Supabase
       </div>
     </aside>
   )
