@@ -37,11 +37,48 @@ export function fmtRelative(iso: string) {
 export function extractActionItems(text: string): string[] {
   const lines = text.split('\n')
   const items: string[] = []
+  const seen = new Set<string>()
+
+  // Action item patterns — covers Otter transcripts, bullet lists, and natural language
+  const actionPatterns = [
+    /^action item[s]?[:\-\s]+/i,
+    /^[-*•◦▸→]\s+/,
+    /^\d+\.\s+/,
+    /\b(i will|we will|i'll|we'll|i'm going to|we're going to)\b/i,
+    /\b(please|can you|could you|make sure|don't forget|remember to|need to|needs to)\b/i,
+    /\b(follow.?up|follow up|reach out|send|schedule|set up|book|call|email|review|update|check|confirm|share|prepare|draft|create|add|remove|fix|look into)\b/i,
+    /\b(assigned to|owner:|due:|deadline:|by [a-z]+day)\b/i,
+    /\btake.?away[s]?\b/i,
+    /\bnext step[s]?\b/i,
+  ]
+
+  // Noise patterns to skip — Otter speaker labels, timestamps, filler
+  const skipPatterns = [
+    /^[A-Z][a-z]+ [A-Z][a-z]+\s*\d+:\d+/,  // "John Smith 0:01"
+    /^\d+:\d+/,                               // timestamps
+    /^(um|uh|yeah|okay|ok|right|so|like|you know|i mean)[,\s]/i,
+    /^(speaker \d+|participant \d+)/i,
+  ]
+
   for (const line of lines) {
     const trimmed = line.trim()
-    if (/^[-*•]\s+/i.test(trimmed) || /^action item/i.test(trimmed) || /\bwill\b|\bneed to\b|\bfollow.?up\b|\bassign/i.test(trimmed)) {
-      const cleaned = trimmed.replace(/^[-*•]\s+/, '').replace(/^action item:?\s*/i, '')
-      if (cleaned.length > 5 && cleaned.length < 200) items.push(cleaned)
+    if (trimmed.length < 8 || trimmed.length > 250) continue
+    if (skipPatterns.some(p => p.test(trimmed))) continue
+
+    const isAction = actionPatterns.some(p => p.test(trimmed))
+    if (isAction) {
+      const cleaned = trimmed
+        .replace(/^action item[s]?[:\-\s]+/i, '')
+        .replace(/^[-*•◦▸→]\s+/, '')
+        .replace(/^\d+\.\s+/, '')
+        .replace(/^(next step[s]?|take.?away[s]?)[:\-\s]*/i, '')
+        .trim()
+
+      const key = cleaned.toLowerCase().slice(0, 40)
+      if (cleaned.length > 8 && !seen.has(key)) {
+        seen.add(key)
+        items.push(cleaned)
+      }
     }
   }
   return items.slice(0, 20)
@@ -50,11 +87,38 @@ export function extractActionItems(text: string): string[] {
 export function extractTopics(text: string): string[] {
   const lines = text.split('\n')
   const topics: string[] = []
+  const seen = new Set<string>()
+
+  const topicPatterns = [
+    /^#+\s+/,                                          // Markdown headings
+    /^topic[:\-\s]+/i,
+    /^(discussed|talking about|re:|regarding|agenda)[:\-\s]+/i,
+    /^(question|concern|issue|update|status)[:\-\s]+/i,
+    /\b(talked about|discussed|brought up|mentioned|raised|covered)\b/i,
+  ]
+
+  const skipPatterns = [
+    /^[A-Z][a-z]+ [A-Z][a-z]+\s*\d+:\d+/,
+    /^\d+:\d+/,
+    /^(um|uh|yeah|okay|so)\b/i,
+  ]
+
   for (const line of lines) {
     const trimmed = line.trim()
-    if (/^#+\s+/.test(trimmed) || /^topic[:\s]/i.test(trimmed) || /^discuss/i.test(trimmed)) {
-      const cleaned = trimmed.replace(/^#+\s+/, '').replace(/^topic:?\s*/i, '')
-      if (cleaned.length > 3 && cleaned.length < 150) topics.push(cleaned)
+    if (trimmed.length < 5 || trimmed.length > 150) continue
+    if (skipPatterns.some(p => p.test(trimmed))) continue
+
+    if (topicPatterns.some(p => p.test(trimmed))) {
+      const cleaned = trimmed
+        .replace(/^#+\s+/, '')
+        .replace(/^(topic|discussed|re|regarding|agenda|question|concern|issue|update|status)[:\-\s]+/i, '')
+        .trim()
+
+      const key = cleaned.toLowerCase().slice(0, 40)
+      if (cleaned.length > 4 && !seen.has(key)) {
+        seen.add(key)
+        topics.push(cleaned)
+      }
     }
   }
   return topics.slice(0, 10)

@@ -369,18 +369,13 @@ function NewNoteModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
   const [content, setContent] = useState('')
   const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const [saving, setSaving] = useState(false)
-  const [extracting, setExtracting] = useState(false)
   const [extracted, setExtracted] = useState<{ actionItems: string[]; topics: string[] } | null>(null)
 
-  const extract = async () => {
+  const extract = () => {
     if (!content.trim()) return
-    setExtracting(true)
-    try {
-      const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript: content }) })
-      const data = await res.json()
-      if (data.actionItems || data.topics) setExtracted(data)
-    } catch { /* silent */ }
-    finally { setExtracting(false) }
+    const actionItems = extractActionItems(content)
+    const topics = extractTopics(content)
+    setExtracted({ actionItems, topics })
   }
 
   const submit = async () => {
@@ -405,8 +400,8 @@ function NewNoteModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
 
         {/* AI Extract button */}
         {content.trim() && !extracted && (
-          <button onClick={extract} disabled={extracting} className="w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50">
-            {extracting ? <><Loader2 size={15} className="animate-spin" /> Extracting with AI...</> : '✨ Extract Action Items & Topics with AI'}
+          <button onClick={extract} className="w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">
+            ✨ Extract Action Items & Topics
           </button>
         )}
 
