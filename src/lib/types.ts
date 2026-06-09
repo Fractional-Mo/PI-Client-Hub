@@ -20,6 +20,7 @@ export interface DiscussionTopic {
   title: string
   body?: string
   resolved: boolean
+  dueDate?: string
   createdAt: string
   updatedAt: string
   sourceNoteId?: string
@@ -59,6 +60,7 @@ export interface Project {
   title: string
   description?: string
   status: ProjectStatus
+  dueDate?: string
   createdAt: string
   updatedAt: string
 }

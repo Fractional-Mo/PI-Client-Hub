@@ -84,7 +84,7 @@ export async function createTopic(t: Omit<DiscussionTopic, 'id' | 'createdAt' | 
   const now = new Date().toISOString()
   const { data, error } = await supabase.from('discussion_topics').insert({
     id: uid(), client_id: t.clientId, title: t.title, body: t.body,
-    resolved: t.resolved, source_note_id: t.sourceNoteId, created_at: now, updated_at: now,
+    resolved: t.resolved, due_date: t.dueDate, source_note_id: t.sourceNoteId, created_at: now, updated_at: now,
   }).select().single()
   if (error) throw error
   return rowToTopic(data)
@@ -92,7 +92,8 @@ export async function createTopic(t: Omit<DiscussionTopic, 'id' | 'createdAt' | 
 
 export async function patchTopic(id: string, patch: Partial<DiscussionTopic>): Promise<void> {
   const { error } = await supabase.from('discussion_topics').update({
-    title: patch.title, body: patch.body, resolved: patch.resolved, updated_at: new Date().toISOString(),
+    title: patch.title, body: patch.body, resolved: patch.resolved,
+    due_date: patch.dueDate, updated_at: new Date().toISOString(),
   }).eq('id', id)
   if (error) throw error
 }
@@ -142,7 +143,7 @@ export async function createProject(p: Omit<Project, 'id' | 'createdAt' | 'updat
   const now = new Date().toISOString()
   const { data, error } = await supabase.from('projects').insert({
     id: uid(), client_id: p.clientId, title: p.title, description: p.description,
-    status: p.status, created_at: now, updated_at: now,
+    status: p.status, due_date: p.dueDate, created_at: now, updated_at: now,
   }).select().single()
   if (error) throw error
   return rowToProject(data)
@@ -151,7 +152,7 @@ export async function createProject(p: Omit<Project, 'id' | 'createdAt' | 'updat
 export async function patchProject(id: string, patch: Partial<Project>): Promise<void> {
   const { error } = await supabase.from('projects').update({
     title: patch.title, description: patch.description, status: patch.status,
-    updated_at: new Date().toISOString(),
+    due_date: patch.dueDate, updated_at: new Date().toISOString(),
   }).eq('id', id)
   if (error) throw error
 }
@@ -182,11 +183,11 @@ function rowToActionItem(r: any): ActionItem {
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToTopic(r: any): DiscussionTopic {
-  return { id: r.id, clientId: r.client_id, title: r.title, body: r.body, resolved: r.resolved, sourceNoteId: r.source_note_id, createdAt: r.created_at, updatedAt: r.updated_at }
+  return { id: r.id, clientId: r.client_id, title: r.title, body: r.body, resolved: r.resolved, dueDate: r.due_date, sourceNoteId: r.source_note_id, createdAt: r.created_at, updatedAt: r.updated_at }
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToProject(r: any): Project {
-  return { id: r.id, clientId: r.client_id, title: r.title, description: r.description, status: r.status as ProjectStatus, createdAt: r.created_at, updatedAt: r.updated_at }
+  return { id: r.id, clientId: r.client_id, title: r.title, description: r.description, status: r.status as ProjectStatus, dueDate: r.due_date, createdAt: r.created_at, updatedAt: r.updated_at }
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToNote(r: any): MeetingNote {

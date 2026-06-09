@@ -362,15 +362,17 @@ function ProjectCard({ project, onUpdate, onDelete }: { project: Project; onUpda
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(project.title)
   const [desc, setDesc] = useState(project.description ?? '')
+  const [dueDate, setDueDate] = useState(project.dueDate ?? '')
   const cfg = projectStatusConfig[project.status]
+  const overdue = project.dueDate && new Date(project.dueDate) < new Date() && project.status !== 'completed'
 
-  const save = async () => { await onUpdate({ title, description: desc || undefined }); setEditing(false) }
+  const save = async () => { await onUpdate({ title, description: desc || undefined, dueDate: dueDate || undefined }); setEditing(false) }
 
   return (
     <div className={cn('bg-white rounded-2xl border p-5 group transition-all hover:shadow-md', project.status === 'completed' ? 'border-slate-100 opacity-70' : 'border-slate-200')}>
       <div className="flex items-start justify-between mb-3">
         {editing ? (
-          <input value={title} onChange={e => setTitle(e.target.value)} className="font-semibold text-slate-900 text-sm w-full border-b border-indigo-300 focus:outline-none pb-0.5 bg-transparent" />
+          <input value={title} onChange={e => setTitle(e.target.value)} className="font-semibold text-slate-900 text-sm w-full border-b border-orange-300 focus:outline-none pb-0.5 bg-transparent" />
         ) : (
           <h3 className={cn('font-semibold text-sm text-slate-900 leading-snug', project.status === 'completed' && 'line-through text-slate-400')}>{project.title}</h3>
         )}
@@ -384,9 +386,23 @@ function ProjectCard({ project, onUpdate, onDelete }: { project: Project; onUpda
       </div>
 
       {editing ? (
-        <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2} placeholder="Description..." className="w-full text-xs text-slate-600 border border-slate-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-orange-200 mb-2" />
+        <div className="space-y-2 mb-3">
+          <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={2} placeholder="Description..." className="w-full text-xs text-slate-600 border border-slate-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-orange-200" />
+          <div className="flex items-center gap-2">
+            <Calendar size={12} className="text-slate-400 flex-shrink-0" />
+            <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-200 text-slate-600" />
+            {dueDate && <button onClick={() => setDueDate('')} className="text-[10px] text-slate-400 hover:text-red-400">clear</button>}
+          </div>
+        </div>
       ) : (
-        project.description && <p className="text-xs text-slate-500 leading-relaxed mb-3">{project.description}</p>
+        <div className="mb-3 space-y-1">
+          {project.description && <p className="text-xs text-slate-500 leading-relaxed">{project.description}</p>}
+          {project.dueDate && (
+            <p className={cn('text-xs flex items-center gap-1 font-medium', overdue ? 'text-red-500' : 'text-slate-400')}>
+              <Calendar size={11} /> Due {fmtDate(project.dueDate)}{overdue && ' · Overdue'}
+            </p>
+          )}
+        </div>
       )}
 
       <div className="flex items-center justify-between mt-2">
@@ -400,14 +416,14 @@ function ProjectCard({ project, onUpdate, onDelete }: { project: Project; onUpda
           <option value="completed">Completed</option>
         </select>
 
-        {editing && (
+        {editing ? (
           <div className="flex gap-2">
             <button onClick={save} className="text-xs text-white px-3 py-1 rounded-lg font-medium" style={{ background: 'linear-gradient(135deg, #F97316, #FBBF24)' }}>Save</button>
-            <button onClick={() => { setEditing(false); setTitle(project.title); setDesc(project.description ?? '') }} className="text-xs text-slate-500 px-3 py-1 rounded-lg hover:bg-slate-100">Cancel</button>
+            <button onClick={() => { setEditing(false); setTitle(project.title); setDesc(project.description ?? ''); setDueDate(project.dueDate ?? '') }} className="text-xs text-slate-500 px-3 py-1 rounded-lg hover:bg-slate-100">Cancel</button>
           </div>
+        ) : (
+          <p className="text-[10px] text-slate-400">{fmtRelative(project.updatedAt)}</p>
         )}
-
-        {!editing && <p className="text-[10px] text-slate-400">{fmtRelative(project.updatedAt)}</p>}
       </div>
     </div>
   )
@@ -480,7 +496,9 @@ function StatusSelect({ value, onChange }: { value: Status; onChange: (s: Status
 function TopicRow({ topic, onUpdate, onDelete }: { topic: DiscussionTopic; onUpdate: (p: Partial<DiscussionTopic>) => Promise<void>; onDelete: () => Promise<void> }) {
   const [editing, setEditing] = useState(false)
   const [body, setBody] = useState(topic.body ?? '')
-  const save = async () => { await onUpdate({ body }); setEditing(false) }
+  const [dueDate, setDueDate] = useState(topic.dueDate ?? '')
+  const overdue = topic.dueDate && new Date(topic.dueDate) < new Date() && !topic.resolved
+  const save = async () => { await onUpdate({ body, dueDate: dueDate || undefined }); setEditing(false) }
 
   return (
     <div className={cn('bg-white rounded-xl border px-5 py-4 group transition-all hover:shadow-sm', topic.resolved ? 'border-slate-100 opacity-50' : 'border-slate-200 hover:border-slate-300')}>
@@ -491,18 +509,30 @@ function TopicRow({ topic, onUpdate, onDelete }: { topic: DiscussionTopic; onUpd
         <div className="flex-1 min-w-0">
           <p className={cn('font-medium text-sm text-slate-900', topic.resolved && 'line-through text-slate-400')}>{topic.title}</p>
           {editing ? (
-            <div className="mt-2">
+            <div className="mt-2 space-y-2">
               <textarea value={body} onChange={e => setBody(e.target.value)} rows={3} className="w-full text-sm border border-slate-200 rounded-xl p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-orange-200" placeholder="Add notes..." />
-              <div className="flex gap-2 mt-2">
+              <div className="flex items-center gap-2">
+                <Calendar size={12} className="text-slate-400 flex-shrink-0" />
+                <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className="text-xs border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-orange-200 text-slate-600" />
+                {dueDate && <button onClick={() => setDueDate('')} className="text-[10px] text-slate-400 hover:text-red-400">clear</button>}
+              </div>
+              <div className="flex gap-2">
                 <button onClick={save} className="text-xs text-white px-3 py-1.5 rounded-lg font-medium" style={{ background: 'linear-gradient(135deg, #F97316, #FBBF24)' }}>Save</button>
-                <button onClick={() => setEditing(false)} className="text-xs text-slate-500 px-3 py-1.5 rounded-lg hover:bg-slate-100">Cancel</button>
+                <button onClick={() => { setEditing(false); setBody(topic.body ?? ''); setDueDate(topic.dueDate ?? '') }} className="text-xs text-slate-500 px-3 py-1.5 rounded-lg hover:bg-slate-100">Cancel</button>
               </div>
             </div>
           ) : (
-            <>
-              {topic.body && <p className="text-xs text-slate-500 mt-1 leading-relaxed">{topic.body}</p>}
-              <p className="text-[10px] text-slate-400 mt-1.5">{fmtRelative(topic.updatedAt)}</p>
-            </>
+            <div className="mt-1 space-y-1">
+              {topic.body && <p className="text-xs text-slate-500 leading-relaxed">{topic.body}</p>}
+              <div className="flex items-center gap-3">
+                {topic.dueDate && (
+                  <span className={cn('text-xs flex items-center gap-1 font-medium', overdue ? 'text-red-500' : 'text-slate-400')}>
+                    <Calendar size={11} /> Due {fmtDate(topic.dueDate)}{overdue && ' · Overdue'}
+                  </span>
+                )}
+                <span className="text-[10px] text-slate-400">{fmtRelative(topic.updatedAt)}</span>
+              </div>
+            </div>
           )}
         </div>
         <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
@@ -580,25 +610,29 @@ function NewProjectModal({ open, onClose, onSave }: { open: boolean; onClose: ()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState<ProjectStatus>('active')
+  const [dueDate, setDueDate] = useState('')
   const [saving, setSaving] = useState(false)
   const submit = async () => {
     if (!title.trim()) return
     setSaving(true)
-    await onSave({ title, description: description || undefined, status })
-    setTitle(''); setDescription(''); setStatus('active'); setSaving(false)
+    await onSave({ title, description: description || undefined, status, dueDate: dueDate || undefined })
+    setTitle(''); setDescription(''); setStatus('active'); setDueDate(''); setSaving(false)
   }
   return (
     <Modal open={open} onClose={onClose} title="New Project" size="sm">
       <div className="p-6 space-y-4">
         <Field label="Project Name *"><input autoFocus value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder="e.g. Q3 Case Referrals" className={inputCls} /></Field>
-        <Field label="Description"><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What's this project about?" rows={3} className={inputCls + ' resize-none'} /></Field>
-        <Field label="Status">
-          <select value={status} onChange={e => setStatus(e.target.value as ProjectStatus)} className={inputCls}>
-            <option value="active">Active</option>
-            <option value="on_hold">On Hold</option>
-            <option value="completed">Completed</option>
-          </select>
-        </Field>
+        <Field label="Description"><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="What's this project about?" rows={2} className={inputCls + ' resize-none'} /></Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="Status">
+            <select value={status} onChange={e => setStatus(e.target.value as ProjectStatus)} className={inputCls}>
+              <option value="active">Active</option>
+              <option value="on_hold">On Hold</option>
+              <option value="completed">Completed</option>
+            </select>
+          </Field>
+          <Field label="Due Date"><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputCls} /></Field>
+        </div>
         <div className="flex justify-end gap-3 pt-2">
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
           <button onClick={submit} disabled={saving} className="px-5 py-2 text-sm text-white rounded-xl font-semibold disabled:opacity-50 flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #F97316, #FBBF24)' }}>
@@ -649,18 +683,20 @@ function NewActionModal({ open, onClose, onSave }: { open: boolean; onClose: () 
 function NewTopicModal({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (t: Omit<DiscussionTopic, 'id' | 'createdAt' | 'updatedAt' | 'clientId'>) => Promise<void> }) {
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [saving, setSaving] = useState(false)
   const submit = async () => {
     if (!title.trim()) return
     setSaving(true)
-    await onSave({ title, body: body || undefined, resolved: false })
-    setTitle(''); setBody(''); setSaving(false)
+    await onSave({ title, body: body || undefined, resolved: false, dueDate: dueDate || undefined })
+    setTitle(''); setBody(''); setDueDate(''); setSaving(false)
   }
   return (
     <Modal open={open} onClose={onClose} title="New Discussion Topic" size="sm">
       <div className="p-6 space-y-4">
         <Field label="Topic *"><input autoFocus value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && submit()} placeholder="What needs to be discussed?" className={inputCls} /></Field>
-        <Field label="Notes"><textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Background or context..." rows={3} className={inputCls + ' resize-none'} /></Field>
+        <Field label="Notes"><textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Background or context..." rows={2} className={inputCls + ' resize-none'} /></Field>
+        <Field label="Due Date"><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} className={inputCls} /></Field>
         <div className="flex justify-end gap-3 pt-2">
           <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
           <button onClick={submit} disabled={saving} className="px-5 py-2 text-sm text-white rounded-xl font-semibold disabled:opacity-50 flex items-center gap-2" style={{ background: 'linear-gradient(135deg, #F97316, #FBBF24)' }}>
