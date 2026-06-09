@@ -13,35 +13,50 @@ export default function Sidebar({ clients }: Props) {
   const path = usePathname()
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-[260px] bg-slate-900 text-slate-100 flex flex-col z-30">
-      {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-700/60">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">PI</div>
+    <aside className="fixed left-0 top-0 h-screen w-[270px] flex flex-col z-30" style={{ background: '#0B1829' }}>
+      {/* Logo / Brand */}
+      <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="flex items-center gap-3">
+          {/* FM Logo Mark */}
+          <div className="w-9 h-9 flex-shrink-0">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+              <defs>
+                <linearGradient id="fmGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#F97316"/>
+                  <stop offset="100%" stopColor="#FBBF24"/>
+                </linearGradient>
+              </defs>
+              {/* Stylized FM mark — two M peaks with top bar */}
+              <path d="M4 30 L4 12 L13 24 L20 12 L27 24 L36 12 L36 30" stroke="url(#fmGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <path d="M4 12 L20 12" stroke="url(#fmGrad)" strokeWidth="4" strokeLinecap="round"/>
+            </svg>
+          </div>
           <div>
-            <p className="font-semibold text-sm leading-tight">Client Hub</p>
-            <p className="text-xs text-slate-400 leading-tight">Personal Injury</p>
+            <p className="font-bold text-white text-sm leading-tight tracking-tight">Fractional Mo</p>
+            <p className="text-[11px] leading-tight" style={{ color: 'rgba(255,255,255,0.4)' }}>Client Hub</p>
           </div>
         </div>
       </div>
 
       <nav className="flex-1 overflow-y-auto scrollbar-thin px-3 py-4 space-y-0.5">
-        <NavItem href="/" icon={<LayoutDashboard size={16} />} label="Dashboard" active={path === '/'} />
-        <NavItem href="/search" icon={<Search size={16} />} label="Search" active={path === '/search'} />
-        <NavItem href="/otter" icon={<Mic2 size={16} />} label="Otter.ai Sync" active={path === '/otter'} />
+        <NavItem href="/" icon={<LayoutDashboard size={15} />} label="Dashboard" active={path === '/'} />
+        <NavItem href="/search" icon={<Search size={15} />} label="Search" active={path === '/search'} />
+        <NavItem href="/otter" icon={<Mic2 size={15} />} label="Otter.ai Sync" active={path === '/otter'} />
 
-        <p className="px-3 pt-5 pb-1.5 text-[10px] font-semibold uppercase tracking-widest text-slate-500">Clients</p>
+        <div className="px-3 pt-6 pb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.3)' }}>Clients</p>
+        </div>
         {clients.map(c => (
           <ClientNavItem key={c.id} client={c} active={path === `/clients/${c.id}`} />
         ))}
 
         <div className="pt-4">
-          <NavItem href="/settings" icon={<Settings size={16} />} label="Settings" active={path === '/settings'} />
+          <NavItem href="/settings" icon={<Settings size={15} />} label="Settings" active={path === '/settings'} />
         </div>
       </nav>
 
-      <div className="px-5 py-3 border-t border-slate-700/60 text-xs text-slate-500">
-        Synced via Supabase
+      <div className="px-5 py-3 border-t text-[11px]" style={{ borderColor: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.25)' }}>
+        Synced via Supabase · Real-time
       </div>
     </aside>
   )
@@ -50,9 +65,18 @@ export default function Sidebar({ clients }: Props) {
 function NavItem({ href, icon, label, active }: { href: string; icon: React.ReactNode; label: string; active: boolean }) {
   return (
     <Link href={href} className={cn(
-      'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
-      active ? 'bg-indigo-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-    )}>
+      'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all font-medium',
+      active
+        ? 'text-white'
+        : 'hover:text-white transition-colors'
+    )}
+    style={active
+      ? { background: 'linear-gradient(135deg, #F97316, #FBBF24)', color: 'white' }
+      : { color: 'rgba(255,255,255,0.5)' }
+    }
+    onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)' }}
+    onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = '' }}
+    >
       {icon}
       {label}
     </Link>
@@ -61,11 +85,19 @@ function NavItem({ href, icon, label, active }: { href: string; icon: React.Reac
 
 function ClientNavItem({ client, active }: { client: Client; active: boolean }) {
   return (
-    <Link href={`/clients/${client.id}`} className={cn(
-      'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors',
-      active ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-    )}>
-      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: client.color }} />
+    <Link href={`/clients/${client.id}`}
+      className={cn(
+        'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all font-medium',
+        active ? 'text-white' : ''
+      )}
+      style={active
+        ? { background: 'rgba(249,115,22,0.18)', color: 'white', borderLeft: '2px solid #F97316' }
+        : { color: 'rgba(255,255,255,0.5)' }
+      }
+      onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)' }}
+      onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.background = '' }}
+    >
+      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: client.color }} />
       <span className="truncate">{client.name}</span>
     </Link>
   )
