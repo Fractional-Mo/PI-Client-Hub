@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { Settings, Save, CheckCircle, Download, Upload, Trash2, AlertTriangle } from 'lucide-react'
 import AppShell from '@/components/AppShell'

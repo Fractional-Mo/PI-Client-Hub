@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Plus, CheckSquare, MessageSquare, FileText, ChevronDown, Trash2, Check, Edit3, Mic2, Calendar, Loader2 } from 'lucide-react'

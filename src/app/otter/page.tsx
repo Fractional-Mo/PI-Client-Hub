@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { Mic2, RefreshCw, Key, CheckCircle, AlertCircle, ChevronRight, Loader2 } from 'lucide-react'
 import AppShell from '@/components/AppShell'
