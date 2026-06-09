@@ -39,49 +39,57 @@ export function extractActionItems(text: string): string[] {
   const items: string[] = []
   const seen = new Set<string>()
 
-  // Action item patterns — covers Otter transcripts, bullet lists, and natural language
-  const actionPatterns = [
-    /^action item[s]?[:\-\s]+/i,
-    /^[-*•◦▸→]\s+/,
-    /^\d+\.\s+/,
-    /\b(i will|we will|i'll|we'll|i'm going to|we're going to)\b/i,
-    /\b(please|can you|could you|make sure|don't forget|remember to|need to|needs to)\b/i,
-    /\b(follow.?up|follow up|reach out|send|schedule|set up|book|call|email|review|update|check|confirm|share|prepare|draft|create|add|remove|fix|look into)\b/i,
-    /\b(assigned to|owner:|due:|deadline:|by [a-z]+day)\b/i,
-    /\btake.?away[s]?\b/i,
-    /\bnext step[s]?\b/i,
-  ]
-
-  // Noise patterns to skip — Otter speaker labels, timestamps, filler
-  const skipPatterns = [
-    /^[A-Z][a-z]+ [A-Z][a-z]+\s*\d+:\d+/,  // "John Smith 0:01"
-    /^\d+:\d+/,                               // timestamps
-    /^(um|uh|yeah|okay|ok|right|so|like|you know|i mean)[,\s]/i,
-    /^(speaker \d+|participant \d+)/i,
+  // Junk patterns — observations, context, and filler that are NOT action items
+  const junkPatterns = [
+    /\b(mentions|noted|notes|validates|confirms|acknowledges|explains|describes|outlines|highlights|states|says|said|believes|thinks|feels|agrees|disagrees)\b/i,
+    /\b(is particularly|is very|is quite|creating a|could delay|pending his|pending her)\b/i,
+    /^(and\s+)/i,
+    /^[A-Z][a-z]+ [A-Z][a-z]+ (mentions|notes|outlines|explains|describes)/i, // "John Smith mentions..."
+    /\b(blocker|difficulty|schedule is|unpredictable|busy)\b/i,
   ]
 
   for (const line of lines) {
     const trimmed = line.trim()
-    if (trimmed.length < 8 || trimmed.length > 250) continue
-    if (skipPatterns.some(p => p.test(trimmed))) continue
+    if (trimmed.length < 10 || trimmed.length > 300) continue
 
-    const isAction = actionPatterns.some(p => p.test(trimmed))
-    if (isAction) {
+    // HIGHEST PRIORITY: Otter checkbox action items [ ] @person
+    const isOtterCheckbox = /^\[\s*\]/.test(trimmed)
+    if (isOtterCheckbox) {
       const cleaned = trimmed
-        .replace(/^action item[s]?[:\-\s]+/i, '')
-        .replace(/^[-*•◦▸→]\s+/, '')
-        .replace(/^\d+\.\s+/, '')
-        .replace(/^(next step[s]?|take.?away[s]?)[:\-\s]*/i, '')
+        .replace(/^\[\s*\]\s*/, '')
+        .replace(/^@\w+\s*-?\s*/i, '')
         .trim()
-
-      const key = cleaned.toLowerCase().slice(0, 40)
+      const key = cleaned.toLowerCase().slice(0, 50)
       if (cleaned.length > 8 && !seen.has(key)) {
+        seen.add(key)
+        items.push(cleaned)
+      }
+      continue
+    }
+
+    // Skip junk observations
+    if (junkPatterns.some(p => p.test(trimmed))) continue
+
+    // Strong action signals only
+    const strongActionPatterns = [
+      /^[-*•]\s+@/,                                          // bullet + @mention
+      /\b(will|needs to|need to|should|must|is going to)\s+(send|share|review|update|schedule|call|email|book|confirm|prepare|draft|create|follow.?up|reach out|check|present|discuss|inform|keep)\b/i,
+      /\b(action item|next step|follow.?up|take.?away)[:\s]/i,
+    ]
+
+    if (strongActionPatterns.some(p => p.test(trimmed))) {
+      const cleaned = trimmed
+        .replace(/^[-*•◦▸→]\s+/, '')
+        .replace(/^(action item|next step|take.?away)[:\-\s]*/i, '')
+        .trim()
+      const key = cleaned.toLowerCase().slice(0, 50)
+      if (cleaned.length > 10 && !seen.has(key)) {
         seen.add(key)
         items.push(cleaned)
       }
     }
   }
-  return items.slice(0, 20)
+  return items.slice(0, 15)
 }
 
 export function extractTopics(text: string): string[] {
