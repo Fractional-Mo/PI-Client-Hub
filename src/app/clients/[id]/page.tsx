@@ -369,26 +369,72 @@ function NewNoteModal({ open, onClose, onSave }: { open: boolean; onClose: () =>
   const [content, setContent] = useState('')
   const [meetingDate, setMeetingDate] = useState(new Date().toISOString().split('T')[0])
   const [saving, setSaving] = useState(false)
+  const [extracting, setExtracting] = useState(false)
+  const [extracted, setExtracted] = useState<{ actionItems: string[]; topics: string[] } | null>(null)
+
+  const extract = async () => {
+    if (!content.trim()) return
+    setExtracting(true)
+    try {
+      const res = await fetch('/api/extract', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript: content }) })
+      const data = await res.json()
+      if (data.actionItems || data.topics) setExtracted(data)
+    } catch { /* silent */ }
+    finally { setExtracting(false) }
+  }
 
   const submit = async () => {
     if (!title.trim() || !content.trim()) return
     setSaving(true)
-    await onSave({ title, content, source: 'manual', meetingDate, extractedActionItems: extractActionItems(content), extractedTopics: extractTopics(content) })
-    setTitle(''); setContent(''); setMeetingDate(new Date().toISOString().split('T')[0]); setSaving(false)
+    await onSave({ title, content, source: 'manual', meetingDate, extractedActionItems: extracted?.actionItems ?? extractActionItems(content), extractedTopics: extracted?.topics ?? extractTopics(content) })
+    setTitle(''); setContent(''); setMeetingDate(new Date().toISOString().split('T')[0]); setExtracted(null); setSaving(false)
   }
 
+  const reset = () => { setTitle(''); setContent(''); setExtracted(null); onClose() }
+
   return (
-    <Modal open={open} onClose={onClose} title="Add Meeting Note" size="lg">
+    <Modal open={open} onClose={reset} title="Add Meeting Note" size="lg">
       <div className="p-6 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <Field label="Title *"><input autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Meeting name or summary" className={inputCls} /></Field>
           <Field label="Meeting Date"><input type="date" value={meetingDate} onChange={e => setMeetingDate(e.target.value)} className={inputCls} /></Field>
         </div>
         <Field label="Notes / Transcript *">
-          <textarea value={content} onChange={e => setContent(e.target.value)} placeholder={"Paste your meeting notes or Otter.ai transcript here.\n\nTip: Use bullet points (- item) for action items and # Headings for topics."} rows={12} className={inputCls + ' resize-none font-mono text-xs'} />
+          <textarea value={content} onChange={e => { setContent(e.target.value); setExtracted(null) }} placeholder={"Paste your full Otter.ai transcript here and click 'Extract with AI' — Claude will automatically pull out action items and topics."} rows={10} className={inputCls + ' resize-none font-mono text-xs'} />
         </Field>
+
+        {/* AI Extract button */}
+        {content.trim() && !extracted && (
+          <button onClick={extract} disabled={extracting} className="w-full flex items-center justify-center gap-2 bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors disabled:opacity-50">
+            {extracting ? <><Loader2 size={15} className="animate-spin" /> Extracting with AI...</> : '✨ Extract Action Items & Topics with AI'}
+          </button>
+        )}
+
+        {/* Extracted preview */}
+        {extracted && (
+          <div className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
+            <p className="text-xs font-semibold text-slate-600 flex items-center gap-1">✨ AI Extracted — will be imported after saving</p>
+            {extracted.actionItems.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-amber-700 mb-1.5">Action Items ({extracted.actionItems.length})</p>
+                <ul className="space-y-1">
+                  {extracted.actionItems.map((a, i) => <li key={i} className="text-xs text-slate-700 flex gap-2"><span className="text-amber-500 flex-shrink-0">•</span>{a}</li>)}
+                </ul>
+              </div>
+            )}
+            {extracted.topics.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-blue-700 mb-1.5">Discussion Topics ({extracted.topics.length})</p>
+                <ul className="space-y-1">
+                  {extracted.topics.map((t, i) => <li key={i} className="text-xs text-slate-700 flex gap-2"><span className="text-blue-500 flex-shrink-0">•</span>{t}</li>)}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex justify-end gap-3 pt-2">
-          <button onClick={onClose} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+          <button onClick={reset} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
           <button onClick={submit} disabled={saving} className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium disabled:opacity-50 flex items-center gap-2">
             {saving && <Loader2 size={13} className="animate-spin" />} Save Note
           </button>
