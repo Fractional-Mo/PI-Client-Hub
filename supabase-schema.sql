@@ -82,3 +82,21 @@ insert into clients (id, name, short_name, color) values
   ('parnall',   'Parnall Law',       'Parnall',   '#ef4444'),
   ('burnetti',  'Burnetti, P.A.',    'Burnetti',  '#8b5cf6')
 on conflict (id) do nothing;
+
+-- ── Projects table (add this to your existing Supabase project) ──────────────
+create table if not exists projects (
+  id text primary key,
+  client_id text not null references clients(id) on delete cascade,
+  title text not null,
+  description text,
+  status text not null default 'active' check (status in ('active','on_hold','completed')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists projects_client_id_idx on projects(client_id);
+
+alter table projects enable row level security;
+create policy "Allow all" on projects for all using (true) with check (true);
+
+alter publication supabase_realtime add table projects;

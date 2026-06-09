@@ -51,6 +51,18 @@ export interface Client {
   createdAt: string
 }
 
+export type ProjectStatus = 'active' | 'on_hold' | 'completed'
+
+export interface Project {
+  id: string
+  clientId: string
+  title: string
+  description?: string
+  status: ProjectStatus
+  createdAt: string
+  updatedAt: string
+}
+
 export interface OtterSettings {
   apiKey: string
   lastSyncAt?: string
@@ -62,5 +74,6 @@ export interface AppData {
   actionItems: ActionItem[]
   discussionTopics: DiscussionTopic[]
   meetingNotes: MeetingNote[]
+  projects: Project[]
   otterSettings?: OtterSettings
 }

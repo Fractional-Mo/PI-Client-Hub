@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { Client, ActionItem, DiscussionTopic, MeetingNote, AppData, Priority, Status } from './types'
+import { Client, ActionItem, DiscussionTopic, MeetingNote, AppData, Priority, Status, Project, ProjectStatus } from './types'
 
 export function uid(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36)
@@ -128,13 +128,46 @@ export async function removeNote(id: string): Promise<void> {
   if (error) throw error
 }
 
+// ─── Projects ─────────────────────────────────────────────────────────────────
+
+export async function fetchProjects(clientId?: string): Promise<Project[]> {
+  let q = supabase.from('projects').select('*').order('created_at', { ascending: false })
+  if (clientId) q = q.eq('client_id', clientId)
+  const { data, error } = await q
+  if (error) throw error
+  return (data ?? []).map(rowToProject)
+}
+
+export async function createProject(p: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
+  const now = new Date().toISOString()
+  const { data, error } = await supabase.from('projects').insert({
+    id: uid(), client_id: p.clientId, title: p.title, description: p.description,
+    status: p.status, created_at: now, updated_at: now,
+  }).select().single()
+  if (error) throw error
+  return rowToProject(data)
+}
+
+export async function patchProject(id: string, patch: Partial<Project>): Promise<void> {
+  const { error } = await supabase.from('projects').update({
+    title: patch.title, description: patch.description, status: patch.status,
+    updated_at: new Date().toISOString(),
+  }).eq('id', id)
+  if (error) throw error
+}
+
+export async function removeProject(id: string): Promise<void> {
+  const { error } = await supabase.from('projects').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ─── Full data load ───────────────────────────────────────────────────────────
 
 export async function fetchAllData(): Promise<AppData> {
-  const [clients, actionItems, discussionTopics, meetingNotes] = await Promise.all([
-    fetchClients(), fetchActionItems(), fetchTopics(), fetchNotes(),
+  const [clients, actionItems, discussionTopics, meetingNotes, projects] = await Promise.all([
+    fetchClients(), fetchActionItems(), fetchTopics(), fetchNotes(), fetchProjects(),
   ])
-  return { clients, actionItems, discussionTopics, meetingNotes }
+  return { clients, actionItems, discussionTopics, meetingNotes, projects }
 }
 
 // ─── Row mappers ──────────────────────────────────────────────────────────────
@@ -150,6 +183,10 @@ function rowToActionItem(r: any): ActionItem {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToTopic(r: any): DiscussionTopic {
   return { id: r.id, clientId: r.client_id, title: r.title, body: r.body, resolved: r.resolved, sourceNoteId: r.source_note_id, createdAt: r.created_at, updatedAt: r.updated_at }
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToProject(r: any): Project {
+  return { id: r.id, clientId: r.client_id, title: r.title, description: r.description, status: r.status as ProjectStatus, createdAt: r.created_at, updatedAt: r.updated_at }
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToNote(r: any): MeetingNote {

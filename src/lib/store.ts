@@ -17,6 +17,7 @@ const DEFAULT_DATA: AppData = {
   actionItems: [],
   discussionTopics: [],
   meetingNotes: [],
+  projects: [],
 }
 
 export function loadData(): AppData {
