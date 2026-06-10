@@ -16,33 +16,12 @@ export default function Sidebar({ clients }: Props) {
     <aside className="fixed left-0 top-0 h-screen w-[270px] flex flex-col z-30" style={{ background: '#0B1829' }}>
       {/* Logo / Brand */}
       <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center gap-3">
-          {/* FM Logo Mark */}
-          <div className="w-9 h-9 flex-shrink-0">
-            <svg viewBox="0 0 40 34" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-              <defs>
-                <linearGradient id="fmG" x1="0" y1="34" x2="40" y2="0" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#EA580C"/>
-                  <stop offset="55%" stopColor="#F97316"/>
-                  <stop offset="100%" stopColor="#FBBF24"/>
-                </linearGradient>
-              </defs>
-              {/* M humps — smooth thick strokes like the real logo */}
-              <path
-                d="M4 30 L4 16 L14 26 L20 14 L26 26 L36 16 L36 30"
-                stroke="url(#fmG)" strokeWidth="6.5" strokeLinecap="round" strokeLinejoin="round" fill="none"
-              />
-              {/* Diagonal bar across the top — the "F" wing */}
-              <path
-                d="M2 14 L36 4"
-                stroke="url(#fmG)" strokeWidth="6.5" strokeLinecap="round"
-              />
-            </svg>
+        <div>
+          <div className="flex items-center gap-2 mb-0.5">
+            <div className="w-1.5 h-1.5 rounded-full" style={{ background: 'linear-gradient(135deg, #F97316, #FBBF24)' }} />
+            <p className="font-bold text-white text-sm tracking-tight">Fractional Mo</p>
           </div>
-          <div>
-            <p className="font-bold text-white text-sm leading-tight tracking-tight">Fractional Mo</p>
-            <p className="text-[11px] leading-tight" style={{ color: 'rgba(255,255,255,0.4)' }}>Client Hub</p>
-          </div>
+          <p className="text-[11px] pl-3.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Client Hub</p>
         </div>
       </div>
 
