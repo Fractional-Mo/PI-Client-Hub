@@ -19,16 +19,19 @@ export default function Sidebar({ clients }: Props) {
         <div className="flex items-center gap-3">
           {/* FM Logo Mark */}
           <div className="w-9 h-9 flex-shrink-0">
-            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+            <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
               <defs>
-                <linearGradient id="fmGrad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                <linearGradient id="fmG" x1="0" y1="0" x2="44" y2="44" gradientUnits="userSpaceOnUse">
                   <stop offset="0%" stopColor="#F97316"/>
                   <stop offset="100%" stopColor="#FBBF24"/>
                 </linearGradient>
               </defs>
-              {/* Stylized FM mark — two M peaks with top bar */}
-              <path d="M4 30 L4 12 L13 24 L20 12 L27 24 L36 12 L36 30" stroke="url(#fmGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              <path d="M4 12 L20 12" stroke="url(#fmGrad)" strokeWidth="4" strokeLinecap="round"/>
+              {/* Top diagonal wing / bar */}
+              <path d="M4 16 L38 7 L38 13 L4 22 Z" fill="url(#fmG)"/>
+              {/* Left M hump */}
+              <path d="M4 24 L4 37 L10 37 L10 30 L14 37 L20 37 L20 24 L14 24 L11 30 L8 24 Z" fill="url(#fmG)"/>
+              {/* Right M hump */}
+              <path d="M22 24 L22 37 L28 37 L28 30 L32 37 L38 37 L38 24 L32 24 L29 30 L26 24 Z" fill="url(#fmG)"/>
             </svg>
           </div>
           <div>
